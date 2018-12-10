@@ -1,0 +1,25 @@
+{
+  "name": "mysql-tab",
+  "version": "1.0.0",
+  "description": "interface de alto nivel para consultaas en mysql",
+  "main": "mysql-tab.js",
+  "scripts": {
+    "test": "mocha  && node ./test/basic",
+    "test-model": "node ./test/basic/modelTable.js",
+    "lint": "eslint ./mysql-tab.js"
+  },
+  "keywords": [
+    "mysql",
+    "sql"
+  ],
+  "author": "enyerverfranco@gmail.com",
+  "license": "MIT",
+  "dependencies": {
+    "mysql": "^2.16.0"
+  },
+  "devDependencies": {
+    "eslint": "^5.9.0",
+    "mocha": "^5.2.0",
+    "dbtabla":"^0.2.0"
+  }
+}
