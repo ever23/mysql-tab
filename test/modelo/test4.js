@@ -1,4 +1,4 @@
-const {model}=require("dbTabla")
+const model=require("sql-model")
 const test2=new model("test4",[
     {
         name:"id_key2",
@@ -20,4 +20,5 @@ const test2=new model("test4",[
         type:"date",
     }
 ])
+test2.insert(1,"hola",14,new Date())
 module.exports=test2

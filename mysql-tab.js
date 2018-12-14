@@ -13,23 +13,27 @@ class mysqlTable extends connect
     constructor(params,connect=true)
     {
         super(params,MYSQL_DB)
+       
         this.conection=mysql.createConnection(this.config)
+
         if(connect)
-            this.conection.connect()
+            this.connect()
         this.__escapeChar="`"
         this.__information_schema = "SELECT information_schema.columns.* FROM information_schema.columns WHERE table_name="
         mysqlTable.__caheTablas={}
-        this.__connectCallback=false
+        this.__connectCallback=()=>{}
     }
     /**
     * conecta con la base de datos
     * @param {function} callback - funcion que se  ejecutara al conectar
     */
-    connect(callback=e=>e)
+    connect(callback=()=>{})
     {
         this.__connectCallback=callback
+        
         this.conection.connect(ok=>
         {
+            
             if(ok)
             {
 
@@ -55,13 +59,16 @@ class mysqlTable extends connect
     */
     tabla(tabla,callback,create=true)
     {
+        if(typeof callback ==="boolean")
+            create=callback
         if(typeof mysqlTable.__caheTablas[tabla]!=="undefined")
         {
-            callback(mysqlTable.__caheTablas[tabla])
+            
+            typeof callback==="function"?callback(mysqlTable.__caheTablas[tabla]):null
             return mysqlTable.__caheTablas[tabla]
         }
         return  mysqlTable.__caheTablas[tabla] = super.tabla(tabla,t=>{
-            console.log('tabla',tabla)
+            //console.log('tabla',tabla)
             typeof callback==="function"?callback(t):null
         }, typeof callback==="function" && create)
     }
@@ -80,9 +87,21 @@ class mysqlTable extends connect
                 //console.log(fiels)
                 if(error)
                 {
-                    return reject(error)
+                    if(error.errno==1049)
+                    {
+                        this.__createDatabase(()=>
+                        {
+                            this.query(query).then(resolver).catch(reject)
+                        })
+                    }else {
+                        reject(error)
+                    }
+                    
+                }else
+                {
+                    resolver(result)
                 }
-                resolver(result)
+                
             })
         })
     }
@@ -111,73 +130,48 @@ class mysqlTable extends connect
     */
     __keysInTable(table,callback)
     {
-
+ 
         this.query(`${this.__information_schema}'${table}' and TABLE_SCHEMA='${this.conection.config.database}'`)
             .then(result=>{
-                if(result.length==0)
+                if(!this.inModel(table,callback,result.length==0))
                 {
-                    let model=this.model(table)
-                    if(model)
-                    {
-                        this.__createTable(table,model,callback)
-                    }else {
-                        throw "La tabla no existe"
-                    }
-                }else {
+                    if(result.length==0)
+                        throw "la tabla no existe"
                     this.__procesingKeys(table,result,callback)
                 }
+                
             }).catch(e=>{
-                if(e.errno==1049)
-                {
-                    this.__createDatabase(table,(...params)=>
-                    {
-
-                        callback(...params)
-                    })
-                }else {
-                    throw e
-                }
+                
+                throw e
+                
             })
     }
-    __createDatabase(table,callback)
+    /**
+    * intenta crear la base de datos 
+    * 
+    */
+    __createDatabase(callback)
     {
         let database =this.config.database
-        this.config.database=''
+        this.config.database=""
         this.conection=mysql.createConnection(this.config)
+        
         this.conection.connect(ok=>
         {
-            this.query(`CREATE DATABASE ${database};`).then(d=>
+            //console.log(ok)
+            this.query(`CREATE DATABASE ${database};`).then(()=>
             {
                 this.query(`use ${database}`)
-                    .then(ok2=>
+                    .then(()=>
                     {
+
                         this.__connectCallback(ok)
-                         this.__keysInTable(table,callback)
+                        callback()
                     }).catch(e=>this.__connectCallback(e))
             }).catch(e=>this.__connectCallback(e))
         })
     }
-    __createTable(table,model,callback)
-    {
-        let rescursive=(foreingKey,i)=>
-        {
-
-            if(foreingKey[i]!==undefined)
-            {
-                this.tabla(foreingKey[i].reference,()=>
-                {
-                    i++
-                    rescursive(foreingKey,i)
-                },true)
-            }else {
-                this.query(model.sql(this)).then(ok=>{
-                    callback(model.keys())
-                }).catch(e=>{throw e})
-            }
-
-        }
-        rescursive(model.foreingKey(),0)
-    }
+    
     /**
     * procesa los metadatos y los pasa a la funcion
     * @param {string} table - nombre de la tabla
@@ -187,37 +181,26 @@ class mysqlTable extends connect
     */
     __procesingKeys(table,data,callback)
     {
-        let orderColum={}
-        let colums={}
-        let primarykey=[]
-        let autoincrement
+        
+        let colums=new Array(data.length)
+        
         for(let item of data)
         {
-            orderColum[Number(item.ORDINAL_POSITION)-1]=item.COLUMN_NAME
-
-            colums[item.COLUMN_NAME]={
-                Type: item.COLUMN_TYPE,
-                TypeName : "",
-                KEY : item.COLUMN_KEY,
-                Extra : item.EXTRA,
-                Default :  item.COLUMN_DEFAULT,
-                Nullable :  item.IS_NULLABLE == "YE" ? true : false,
-                Position : item.ORDINAL_POSITION
+            colums[item.ORDINAL_POSITION-1]={
+                name:item.COLUMN_NAME,
+                type:item.COLUMN_TYPE,
+                defaultNull:item.IS_NULLABLE == "YE" ? true : false,
+                primary:item.COLUMN_KEY == "PRI",
+                unique:item.COLUMN_KEY == "UNI",
+                defaul:item.COLUMN_DEFAULT,
+                autoincrement:item.EXTRA == "auto_increment"
             }
-            if (item.COLUMN_KEY == "PRI" && primarykey.find(p=>{return p===item.COLUMN_NAME})===undefined)
-            {
-                primarykey.push(item.COLUMN_NAME)
-            }
-            if (item.EXTRA == "auto_increment")
-            {
-                autoincrement = item.COLUMN_NAME
-            }
+           
         }
         callback({
-            colum:colums,
-            primary:primarykey,
-            autoincrement:autoincrement,
-            OrderColum:orderColum
+            tabla:table,
+            colums:colums
+    
         })
     }
 }

@@ -4,7 +4,7 @@
   "description": "interface de alto nivel para consultaas en mysql",
   "main": "mysql-tab.js",
   "scripts": {
-    "test": "mocha  && node ./test/basic",
+    "test": "mocha ./test/index.js",
     "test-model": "node ./test/basic/modelTable.js",
     "lint": "eslint ./mysql-tab.js"
   },
