@@ -8,7 +8,7 @@ const dbRow = require("dbtabla/lib/dbRow")
 const path = require('path')
 function createAndInsert(callback)
 {
-   
+
     return (new Promise((resolve,reject)=>
     {
         const mysql= new connect({
@@ -22,11 +22,11 @@ function createAndInsert(callback)
             callback(resolve,reject,mysql,ok)
         }).catch(e=>
         {
-            
+
             mysql.end()
             reject(e)
         })
-            
+
     }))
 }
 describe("Test de la clase mysql-tab :tabla",()=>
@@ -42,8 +42,8 @@ describe("Test de la clase mysql-tab :tabla",()=>
             })
             mysql.end()
             resolve(mysql.tabla('test1'))
-            
-        
+
+
         })).then(test1=>
         {
             assert.ok(test1 instanceof dbtabla,"debe retornar un objeto dbtabla")
@@ -51,7 +51,7 @@ describe("Test de la clase mysql-tab :tabla",()=>
     })
     it('obtencion del objeto dbtabla async',()=>
     {
-        
+
         return (new Promise((resolve,reject)=>
         {
             const mysql= new connect({
@@ -71,7 +71,7 @@ describe("Test de la clase mysql-tab :tabla",()=>
                     mysql.end()
                     reject(e)
                 })
-            
+
         })).then(test1=>
         {
             assert.ok((test1 instanceof dbtabla),"debe retornar un objeto dbtabla")
@@ -97,22 +97,22 @@ describe("Test de la clase mysql-tab :tabla",()=>
                 mysql.end()
                 reject(e)
             })
-            
+
         })).then(ok=>
         {
 
             assert.ok(typeof ok==="object","debe retornar un objeto")
             assert.equal(ok.$sql,"INSERT INTO `test1` (`row1`,`row2`,`row3`) VALUES ('text',12,'text2');")
-            
+
         })
-        
-       
+
+
     })
     it('dbTabla:select',()=>
     {
         return createAndInsert((resolve,reject,mysql,ok)=>
             {
-               
+
                 let test1=mysql.tabla('test1')
                 test1.select().then(d=>
                     {
@@ -132,9 +132,9 @@ describe("Test de la clase mysql-tab :tabla",()=>
                 assert.equal(data[0].row1,"text")
                 assert.equal(data[0].row2,12)
                 assert.equal(data[0].row3,"text2")
-                
-            })  
-         
+
+            })
+
     })
     it('dbTabla:update',()=>
     {
@@ -156,8 +156,8 @@ describe("Test de la clase mysql-tab :tabla",()=>
             {
                 assert.ok(typeof data==="object","debe retornar un objeto")
                 assert.equal(data.$sql,"UPDATE `test1` SET `row1`='hola' WHERE `id`="+id+";")
-                
-            })  
+
+            })
     })
     it('dbTabla:delete',()=>
     {
@@ -180,9 +180,9 @@ describe("Test de la clase mysql-tab :tabla",()=>
 
                 assert.ok(typeof data==="object","debe retornar un objeto")
                 assert.equal(data.$sql,"DELETE FROM `test1` WHERE `id`="+id+";")
-                
-            }) 
-        
+
+            })
+
     })
     it('load model test3',()=>
     {
@@ -197,7 +197,7 @@ describe("Test de la clase mysql-tab :tabla",()=>
             try{
                  mysql.tabla('test3',e=>
                     {
-                       
+
                         resolve(e)
                     },true)
             }catch(e)
@@ -205,7 +205,7 @@ describe("Test de la clase mysql-tab :tabla",()=>
                 mysql.end()
                 reject(e)
             }
-           
+
         })).then(test3=>
         {
             return test3.select().then(d=>
@@ -213,8 +213,8 @@ describe("Test de la clase mysql-tab :tabla",()=>
                 test3.__conection.end()
                 assert.ok(test3 instanceof dbtabla,"debe retornar un objeto dbtabla")
             })
-            
-        }) 
+
+        })
     })
     it('load model test4',()=>
     {
@@ -229,7 +229,7 @@ describe("Test de la clase mysql-tab :tabla",()=>
             try{
                 mysql.tabla('test4',e=>
                     {
-                       
+
                         resolve(e)
                     },true)
             }catch(e)
@@ -237,7 +237,7 @@ describe("Test de la clase mysql-tab :tabla",()=>
                 mysql.end()
                 reject(e)
             }
-           
+
         })).then(test4=>
         {
             return test4.select().then(d=>
@@ -245,7 +245,78 @@ describe("Test de la clase mysql-tab :tabla",()=>
                 test4.__conection.end()
                 assert.ok(test4 instanceof dbtabla,"debe retornar un objeto dbtabla")
             })
-            
-        }) 
+
+        })
     })
+    it('trasnsaciones con promesas commit',()=>
+    {
+
+        return (new Promise((resolve,reject)=>
+            {
+                const mysql= new connect({
+                    host     : 'localhost',
+                    user     : 'root',
+                    database :'test_mysql_tab'
+                })
+                mysql.pathModels(path.dirname(__filename)+"/modelo")
+                let test3=mysql.tabla("test3"),
+                    test4=mysql.tabla("test4")
+                mysql.beginTransaction().then(async()=>
+                {
+                    let ok4=await test4.insert(null,"commit",12,"text2")
+                    if(ok4.error)
+                        throw ok4
+                    let ok3=await test3.insert(null,"commit",ok4.insertId,"text2")
+                    if(ok3.error)
+                        throw ok3
+                    await mysql.commit()
+                    mysql.end()
+                    resolve(ok3)
+                }).catch(e=>
+                {
+                    mysql.rollback()
+                    mysql.end()
+                    reject(e)
+                })
+            })).then(ok=>
+            {
+                //console.log(ok)
+                assert.equal(typeof ok,"object")
+            })
+    })
+    it('trasnsaciones con promesas rollback',()=>
+    {
+        return (new Promise((resolve,reject)=>
+            {
+                const mysql= new connect({
+                    host     : 'localhost',
+                    user     : 'root',
+                    database :'test_mysql_tab'
+                })
+                mysql.pathModels(path.dirname(__filename)+"/modelo")
+                let test3=mysql.tabla("test3"),
+                    test4=mysql.tabla("test4")
+                mysql.beginTransaction().then(async()=>
+                {
+                    let ok4=await test4.insert(null,"rollback",12,"text2")
+                    if(ok4.error)
+                        throw ok4
+                    let ok3=await test3.insert(null,"rollback",34,"text2")
+                    if(ok3.error)
+                        throw ok3
+                    await mysql.commit()
+                    mysql.end()
+                    reject(ok3)
+                }).catch(e=>
+                {
+                    mysql.rollback().then(resolve).catch(reject)
+                    mysql.end()
+                })
+            })).then(ok=>
+            {
+                //console.log(ok)
+                assert.equal(typeof ok,"undefined")
+            })
+    })
+
 })

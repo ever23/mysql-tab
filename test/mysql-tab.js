@@ -17,10 +17,10 @@ describe("Test de la clase sqlite3-tab",()=>
         assert.equal(typeof mysql.end,"function")
         mysql.end()
     })
-   
+
     it('metodo query',()=>
     {
-       
+
         return (new Promise((resolve,reject)=>
             {
                 const mysql= new connect({
@@ -43,7 +43,7 @@ describe("Test de la clase sqlite3-tab",()=>
     })
     it('crear base de datos si no existe',()=>
     {
-        
+
         return (new Promise((resolve,reject)=>
             {
                 const mysql= new connect({
@@ -51,7 +51,7 @@ describe("Test de la clase sqlite3-tab",()=>
                     user     : 'root',
                     database :'test_mysql_tab'
                 })
-                
+
                 mysql.query("select 1").then(ok=>
                 {
                     mysql.end()
@@ -61,7 +61,7 @@ describe("Test de la clase sqlite3-tab",()=>
                     mysql.end()
                     reject(e)
                 })
-              
+
             })).then(ok=>
             {
                 //console.log(ok)

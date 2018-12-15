@@ -1,4 +1,5 @@
 const mysql=require("mysql")
+const connectionMysql=require("mysql/lib/Connection")
 const {MYSQL_DB,connect}=require("dbtabla")
 /**
 * mysqlTable
@@ -12,17 +13,85 @@ class mysqlTable extends connect
     */
     constructor(params,connect=true)
     {
-        super(params,MYSQL_DB)
-
-        this.conection=mysql.createConnection(this.config)
-
-        if(connect)
-            this.connect()
+        if(params instanceof connectionMysql)
+        {
+             this.conection=params
+        }else {
+            super(params,MYSQL_DB)
+            this.conection=mysql.createConnection(this.config)
+            if(connect)
+                this.connect()
+        }
         this.__escapeChar="`"
         this.__information_schema = "SELECT information_schema.columns.* FROM information_schema.columns WHERE table_name="
         mysqlTable.__caheTablas={}
         this.__connectCallback=()=>{}
     }
+    /**
+    * envia una sentencia START TRANSACTION a la base de datos
+    *
+    * @param {object} config - configuracion de la query mysql
+    * @return {Promise}
+    */
+    beginTransaction(config={})
+    {
+        return new Promise((res,rej)=>
+        {
+            this.conection.beginTransaction(config,(err)=>
+            {
+                if(err)
+                {
+                    rej(err)
+                }else {
+                    res()
+                }
+            })
+        })
+    }
+    /**
+    * envia una sentencia commit a la base de datos
+    *
+    * @param {object} config - configuracion de la query mysql
+    * @return {Promise}
+    */
+    commit(config={})
+    {
+        return new Promise((res,rej)=>
+        {
+            this.conection.commit(config,(err)=>
+            {
+                if(err)
+                {
+                    rej(err)
+                }else {
+                    res()
+                }
+            })
+        })
+    }
+    /**
+    * envia una sentencia rollback a la base de datos
+    *
+    * @param {object} config - configuracion de la query mysql
+    * @return {Promise}
+    */
+    rollback(config={})
+    {
+        return new Promise((res,rej)=>
+        {
+            console.log(this.connection)
+            this.conection.rollback(config,(err)=>
+            {
+                if(err)
+                {
+                    rej(err)
+                }else {
+                    res()
+                }
+            })
+        })
+    }
+
     /**
     * conecta con la base de datos
     * @param {function} callback - funcion que se  ejecutara al conectar
@@ -72,13 +141,14 @@ class mysqlTable extends connect
     /**
     * envia una consulta a la base de datos
     * @param {string} query - consulta sql
+    * @param {object} config - configuracion de la query mysql
     * @return {Promise}
     */
-    query(query)
+    query(query,config={})
     {
         return new Promise((resolver,reject)=>
         {
-            this.conection.query(query,(error,result)=>
+            this.conection.query(query,config,(error,result)=>
             {
                 //console.log(fiels)
                 if(error)
@@ -121,7 +191,7 @@ class mysqlTable extends connect
     * verificara la existencia de la tabla
     * en la base de datos y pasa lo metadatos  al valor de la promesa
     * @param {string} table - nombre de la tabla
-    * @return {Promise} 
+    * @return {Promise}
     */
     __keysInTable(table)
     {
