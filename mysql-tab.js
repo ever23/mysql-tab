@@ -13,7 +13,7 @@ class mysqlTable extends connect
     constructor(params,connect=true)
     {
         super(params,MYSQL_DB)
-       
+
         this.conection=mysql.createConnection(this.config)
 
         if(connect)
@@ -30,10 +30,10 @@ class mysqlTable extends connect
     connect(callback=()=>{})
     {
         this.__connectCallback=callback
-        
+
         this.conection.connect(ok=>
         {
-            
+
             if(ok)
             {
 
@@ -45,11 +45,7 @@ class mysqlTable extends connect
 
         })
     }
-    pathModels(pathModels)
-    {
-        super.pathModels(pathModels)
 
-    }
     /**
     * construlle un objeto dbtabla asociado a el nombre
     * de la tabla del primer parametro
@@ -63,7 +59,7 @@ class mysqlTable extends connect
             create=callback
         if(typeof mysqlTable.__caheTablas[tabla]!=="undefined")
         {
-            
+
             typeof callback==="function"?callback(mysqlTable.__caheTablas[tabla]):null
             return mysqlTable.__caheTablas[tabla]
         }
@@ -96,12 +92,12 @@ class mysqlTable extends connect
                     }else {
                         reject(error)
                     }
-                    
+
                 }else
                 {
                     resolver(result)
                 }
-                
+
             })
         })
     }
@@ -123,39 +119,38 @@ class mysqlTable extends connect
     }
     /**
     * verificara la existencia de la tabla
-    * en la base de datos y pasa lo metadatos de la misma calback en
-    * el segundo parametro
+    * en la base de datos y pasa lo metadatos  al valor de la promesa
     * @param {string} table - nombre de la tabla
-    * @param {function} callback - funcion a ejecutar cuando se obtengan los metadatos
+    * @return {Promise} 
     */
-    __keysInTable(table,callback)
+    __keysInTable(table)
     {
- 
-        this.query(`${this.__information_schema}'${table}' and TABLE_SCHEMA='${this.conection.config.database}'`)
-            .then(result=>{
-                if(!this.inModel(table,callback,result.length==0))
-                {
-                    if(result.length==0)
-                        throw "la tabla no existe"
-                    this.__procesingKeys(table,result,callback)
-                }
-                
-            }).catch(e=>{
-                
-                throw e
-                
-            })
+        return new Promise((res,rej)=>
+        {
+            this.query(`${this.__information_schema}'${table}' and TABLE_SCHEMA='${this.conection.config.database}'`)
+                .then(result=>{
+                    if(!this.inModel(table,res,result.length==0))
+                    {
+                        if(result.length==0)
+                            rej("la tabla no existe")
+                        else
+                            this.__procesingKeys(table,result,res)
+                    }
+
+                }).catch(rej)
+        })
+
     }
     /**
-    * intenta crear la base de datos 
-    * 
+    * intenta crear la base de datos
+    *
     */
     __createDatabase(callback)
     {
         let database =this.config.database
         this.config.database=""
         this.conection=mysql.createConnection(this.config)
-        
+
         this.conection.connect(ok=>
         {
             //console.log(ok)
@@ -171,7 +166,7 @@ class mysqlTable extends connect
             }).catch(e=>this.__connectCallback(e))
         })
     }
-    
+
     /**
     * procesa los metadatos y los pasa a la funcion
     * @param {string} table - nombre de la tabla
@@ -181,9 +176,9 @@ class mysqlTable extends connect
     */
     __procesingKeys(table,data,callback)
     {
-        
+
         let colums=new Array(data.length)
-        
+
         for(let item of data)
         {
             colums[item.ORDINAL_POSITION-1]={
@@ -195,12 +190,12 @@ class mysqlTable extends connect
                 defaul:item.COLUMN_DEFAULT,
                 autoincrement:item.EXTRA == "auto_increment"
             }
-           
+
         }
         callback({
             tabla:table,
             colums:colums
-    
+
         })
     }
 }
