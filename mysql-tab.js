@@ -8,17 +8,18 @@ const {MYSQL_DB,connect}=require("dbtabla")
 class mysqlTable extends connect
 {
     /**
-    * @param {object} param - configuracion para mysql
-    * @param {boolean} connect - indica si conectata al instante
+    * @param {object|Connection} param - configuracion para mysql o objeto de coneccion mysql
+    * @param {boolean} connect - indica si connectata al instante
     */
     constructor(params,connect=true)
     {
         if(params instanceof connectionMysql)
         {
-             this.conection=params
+            super({},MYSQL_DB)
+            this.connection=params
         }else {
             super(params,MYSQL_DB)
-            this.conection=mysql.createConnection(this.config)
+            this.connection=mysql.createConnection(this.config)
             if(connect)
                 this.connect()
         }
@@ -37,7 +38,7 @@ class mysqlTable extends connect
     {
         return new Promise((res,rej)=>
         {
-            this.conection.beginTransaction(config,(err)=>
+            this.connection.beginTransaction(config,(err)=>
             {
                 if(err)
                 {
@@ -58,7 +59,7 @@ class mysqlTable extends connect
     {
         return new Promise((res,rej)=>
         {
-            this.conection.commit(config,(err)=>
+            this.connection.commit(config,(err)=>
             {
                 if(err)
                 {
@@ -79,8 +80,7 @@ class mysqlTable extends connect
     {
         return new Promise((res,rej)=>
         {
-            console.log(this.connection)
-            this.conection.rollback(config,(err)=>
+            this.connection.rollback(config,(err)=>
             {
                 if(err)
                 {
@@ -93,14 +93,14 @@ class mysqlTable extends connect
     }
 
     /**
-    * conecta con la base de datos
-    * @param {function} callback - funcion que se  ejecutara al conectar
+    * connecta con la base de datos
+    * @param {function} callback - funcion que se  ejecutara al connectar
     */
     connect(callback=()=>{})
     {
         this.__connectCallback=callback
 
-        this.conection.connect(ok=>
+        this.connection.connect(ok=>
         {
 
             if(ok)
@@ -148,12 +148,12 @@ class mysqlTable extends connect
     {
         return new Promise((resolver,reject)=>
         {
-            this.conection.query(query,config,(error,result)=>
+            this.connection.query(query,config,(error,result)=>
             {
                 //console.log(fiels)
                 if(error)
                 {
-                    if(error.errno==1049)
+                    if(error.errno==1049 )
                     {
                         this.__createDatabase(()=>
                         {
@@ -178,14 +178,20 @@ class mysqlTable extends connect
     */
     __escapeString(str)
     {
-        return this.conection.escape(str)
+        let result=this.connection.escape(str)
+        if(/^'.*'$/.test(result))
+        {
+            return result.slice(1,-1)
+        }
+        return result
+
     }
     /**
     * termina la coneccion
     */
     end()
     {
-        this.conection.end()
+        this.connection.end()
     }
     /**
     * verificara la existencia de la tabla
@@ -197,7 +203,7 @@ class mysqlTable extends connect
     {
         return new Promise((res,rej)=>
         {
-            this.query(`${this.__information_schema}'${table}' and TABLE_SCHEMA='${this.conection.config.database}'`)
+            this.query(`${this.__information_schema}'${table}' and TABLE_SCHEMA='${this.connection.config.database}'`)
                 .then(result=>{
                     if(!this.inModel(table,res,result.length==0))
                     {
@@ -219,9 +225,9 @@ class mysqlTable extends connect
     {
         let database =this.config.database
         this.config.database=""
-        this.conection=mysql.createConnection(this.config)
+        this.connection=mysql.createConnection(this.config)
 
-        this.conection.connect(ok=>
+        this.connection.connect(ok=>
         {
             //console.log(ok)
             this.query(`CREATE DATABASE ${database};`).then(()=>

@@ -210,7 +210,7 @@ describe("Test de la clase mysql-tab :tabla",()=>
         {
             return test3.select().then(d=>
             {
-                test3.__conection.end()
+                test3.__connection.end()
                 assert.ok(test3 instanceof dbtabla,"debe retornar un objeto dbtabla")
             })
 
@@ -242,7 +242,7 @@ describe("Test de la clase mysql-tab :tabla",()=>
         {
             return test4.select().then(d=>
             {
-                test4.__conection.end()
+                test4.__connection.end()
                 assert.ok(test4 instanceof dbtabla,"debe retornar un objeto dbtabla")
             })
 
