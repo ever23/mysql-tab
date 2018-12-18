@@ -120,9 +120,10 @@ class mysqlTable extends connect
     * de la tabla del primer parametro
     * @param {string} tabla - nombre de la tabla en la base de datos
     * @param {function} callback - funcion anomina que se ejecutara cuando se verifique la existencia de la tabla
+	* @param {boolean} verify -
     * @return {dbTabla}
     */
-    tabla(tabla,callback,create=true)
+    tabla(tabla,callback,verify=true)
     {
         if(typeof callback ==="boolean")
             create=callback
@@ -135,7 +136,7 @@ class mysqlTable extends connect
         return  mysqlTable.__caheTablas[tabla] = super.tabla(tabla,t=>{
             //console.log('tabla',tabla)
             typeof callback==="function"?callback(t):null
-        }, typeof callback==="function" && create)
+        }, typeof callback==="function" && verify)
     }
 
     /**

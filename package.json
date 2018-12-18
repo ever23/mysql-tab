@@ -15,11 +15,12 @@
   "author": "enyerverfranco@gmail.com",
   "license": "MIT",
   "dependencies": {
-    "mysql": "^2.16.0"
+    "mysql": "^2.16.0",
+	"dbtabla":"^0.7.1"
   },
   "devDependencies": {
     "eslint": "^5.9.0",
     "mocha": "^5.2.0",
-    "dbtabla":"^0.2.0"
+    
   }
 }
