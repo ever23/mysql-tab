@@ -1,6 +1,6 @@
 {
   "name": "mysql-tab",
-  "version": "1.0.1",
+  "version": "1.0.3",
   "description": "interface de alto nivel para consultaas en mysql",
   "main": "mysql-tab.js",
   "scripts": {

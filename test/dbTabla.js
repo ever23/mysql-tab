@@ -306,7 +306,7 @@ describe("Test de la clase mysql-tab :tabla",()=>
                         throw ok3
                     await mysql.commit()
                     mysql.end()
-                    reject(ok3)
+                    reject()
                 }).catch(e=>
                 {
                     mysql.rollback().then(resolve).catch(reject)
@@ -315,7 +315,7 @@ describe("Test de la clase mysql-tab :tabla",()=>
             })).then(ok=>
             {
                 //console.log(ok)
-                assert.equal(typeof ok,"undefined")
+                assert.equal(typeof ok,"object")
             })
     })
 

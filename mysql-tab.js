@@ -36,18 +36,7 @@ class mysqlTable extends connect
     */
     beginTransaction(config={})
     {
-        return new Promise((res,rej)=>
-        {
-            this.connection.beginTransaction(config,(err)=>
-            {
-                if(err)
-                {
-                    rej(err)
-                }else {
-                    res()
-                }
-            })
-        })
+        return this.query("START TRANSACTION",config)
     }
     /**
     * envia una sentencia commit a la base de datos
@@ -57,18 +46,7 @@ class mysqlTable extends connect
     */
     commit(config={})
     {
-        return new Promise((res,rej)=>
-        {
-            this.connection.commit(config,(err)=>
-            {
-                if(err)
-                {
-                    rej(err)
-                }else {
-                    res()
-                }
-            })
-        })
+        return this.query("COMMIT",config)
     }
     /**
     * envia una sentencia rollback a la base de datos
@@ -78,18 +56,7 @@ class mysqlTable extends connect
     */
     rollback(config={})
     {
-        return new Promise((res,rej)=>
-        {
-            this.connection.rollback(config,(err)=>
-            {
-                if(err)
-                {
-                    rej(err)
-                }else {
-                    res()
-                }
-            })
-        })
+        return this.query("ROLLBACK",config)
     }
 
     /**
@@ -102,7 +69,6 @@ class mysqlTable extends connect
 
         this.connection.connect(ok=>
         {
-
             if(ok)
             {
 
@@ -230,8 +196,9 @@ class mysqlTable extends connect
     */
     __createDatabase(callback)
     {
-        let database =this.config.database
-        this.config.database=""
+        let database =this.connection.config.database
+        this.config=this.connection.config
+        this.config.database=undefined
         this.connection=mysql.createConnection(this.config)
 
         this.connection.connect(ok=>
