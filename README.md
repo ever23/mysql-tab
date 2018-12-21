@@ -88,7 +88,7 @@ test2.foreingKey({ // se agrega las claves foraneas
 })
 test2.insert(1,"hola",14,"2018/10/23")// datos de inicializacion 
 // el parametro tabla recibira el objeto de la tabla 
-// y el segundo el objeto de coneccion
+// y el segundo el objeto de conexion
 // y el resto los parametros pasados en la llamada
 test2.method("miMetodo",(tabla,connect,...params)=>
 {
@@ -304,7 +304,7 @@ revierte los cambios realizados en la trasaccion y retorna una promesa
 
 ## mysqlTable#end()
 
-Termina la coneccion con la base de datos 
+Termina la conexion con la base de datos 
 
 
 [npm-image]: https://img.shields.io/npm/v/mysql-tab.svg

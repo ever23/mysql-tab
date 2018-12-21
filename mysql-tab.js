@@ -3,12 +3,12 @@ const connectionMysql=require("mysql/lib/Connection")
 const {MYSQL_DB,connect}=require("dbtabla")
 /**
 * mysqlTable
-* crea una coneccion a una base de datos mysql
+* crea una conexion a una base de datos mysql
 */
 class mysqlTable extends connect
 {
     /**
-    * @param {object|Connection} param - configuracion para mysql o objeto de coneccion mysql
+    * @param {object|Connection} param - configuracion para mysql o objeto de conexion mysql
     * @param {boolean} connect - indica si connectata al instante
     */
     constructor(params,connect=true)
@@ -126,7 +126,7 @@ class mysqlTable extends connect
     tabla(tabla,callback,verify=true)
     {
         if(typeof callback ==="boolean")
-            create=callback
+            verify=callback
         if(typeof mysqlTable.__caheTablas[tabla]!=="undefined")
         {
 
@@ -188,7 +188,7 @@ class mysqlTable extends connect
 
     }
     /**
-    * termina la coneccion
+    * termina la conexion
     */
     end()
     {
@@ -206,14 +206,20 @@ class mysqlTable extends connect
         {
             this.query(`${this.__information_schema}'${table}' and TABLE_SCHEMA='${this.connection.config.database}'`)
                 .then(result=>{
-                    if(!this.inModel(table,res,result.length==0))
-                    {
-                        if(result.length==0)
-                            rej("la tabla no existe")
-                        else
-                            this.__procesingKeys(table,result,res)
-                    }
-
+                    this.inModel(table,result.length==0)
+                        .then(res).catch(e=>
+                        {
+                            if(e===undefined)
+                            {
+                                if(result.length==0)
+                                    rej("la tabla no existe")
+                                else
+                                    this.__procesingKeys(table,result,res)
+                            }else
+                            {
+                                rej(e)
+                            }
+                        })
                 }).catch(rej)
         })
 
@@ -253,9 +259,7 @@ class mysqlTable extends connect
     */
     __procesingKeys(table,data,callback)
     {
-
         let colums=new Array(data.length)
-
         for(let item of data)
         {
             colums[item.ORDINAL_POSITION-1]={
