@@ -16,7 +16,7 @@
   "license": "MIT",
   "dependencies": {
     "mysql": "^2.16.0",
-	 "dbtabla":"^0.8.5"
+	"dbtabla":"^0.8.6"
   },
   "devDependencies": {
     "eslint": "^5.9.0",

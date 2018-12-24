@@ -25,7 +25,6 @@ class mysqlTable extends connect
         }
         this.__escapeChar="`"
         this.__information_schema = "SELECT information_schema.columns.* FROM information_schema.columns WHERE table_name="
-        mysqlTable.__caheTablas={}
         this.__connectCallback=()=>{}
     }
     /**
@@ -81,29 +80,7 @@ class mysqlTable extends connect
         })
     }
 
-    /**
-    * construlle un objeto dbtabla asociado a el nombre
-    * de la tabla del primer parametro
-    * @param {string} tabla - nombre de la tabla en la base de datos
-    * @param {function} callback - funcion anomina que se ejecutara cuando se verifique la existencia de la tabla
-	* @param {boolean} verify -
-    * @return {dbTabla}
-    */
-    tabla(tabla,callback,verify=true)
-    {
-        if(typeof callback ==="boolean")
-            verify=callback
-        if(typeof mysqlTable.__caheTablas[tabla]!=="undefined")
-        {
-
-            typeof callback==="function"?callback(mysqlTable.__caheTablas[tabla]):null
-            return mysqlTable.__caheTablas[tabla]
-        }
-        return  mysqlTable.__caheTablas[tabla] = super.tabla(tabla,t=>{
-            //console.log('tabla',tabla)
-            typeof callback==="function"?callback(t):null
-        }, typeof callback==="function" && verify)
-    }
+    
 
     /**
     * envia una consulta a la base de datos
