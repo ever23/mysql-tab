@@ -1,6 +1,6 @@
 {
   "name": "mysql-tab",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "interface de alto nivel para consultaas en mysql",
   "main": "mysql-tab.js",
   "scripts": {
@@ -16,7 +16,7 @@
   "license": "MIT",
   "dependencies": {
     "mysql": "^2.16.0",
-	"dbtabla":"^0.8.6"
+	"dbtabla":"^0.8.7"
   },
   "devDependencies": {
     "eslint": "^5.9.0",
