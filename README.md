@@ -32,7 +32,7 @@ los parametros del constructor de mysqlTable son los mismos que se usarian
 en la funcion createConnection de mysql, usando el metodo *`tabla(tabla)`* se obtiene
 un objeto dbTabla que representa a la tabla con el nombre del parametro en la base de datos.
 
-[Mas documentacion sobre dbTabla..](https://github.com/ever23/dbtabla#dbtabla)
+[Mas documentacion sobre dbTabla..](https://github.com/ever23/dbtabla#dbtabla-1)
 
 ```js
 // file ./index.js
