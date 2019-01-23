@@ -124,6 +124,25 @@ test2.miMetodo("hola")
 ```
 [Mas documentacion sobre tabla-model..](https://github.com/ever23/tabla-model#uso)
 
+## Realizando ingenieria inversa a una base de datos ya creada
+
+Si ya se tiene una base de datos creada con `mysql-tab` tambien puedes crear los modelos a partir de la misma, para esto debe ejecutar en la linea de comandos.
+Esta funcionalidad acepta los siguientes argumentos
+
+- `--host`: (opcional) host de mysql  por defecto es localhost 
+- `--port`: (opcional) puerto mysql por defecto es 3600 
+- `--user`: usuario de mysql  
+- `--password`: contraseña del usuario
+- `--database`: base de datos a utilizar 
+- `--path`: directorio donde seran creados los modelos 
+- `--inicializar`: (opcional) si esta presente creara los datos de inicializacion del modelo con los datos octenidos de cada tabla, si solo se desea inicializar una o mas tablas concretas solo se debe agregar al valor los nombres de las tablas separadas por una coma `,`
+- `--tablas`: (opcional) lista de tablas separadas por coma `,` si este argumento no esta presente se tomaran todas las tablas de la base de datos  
+
+Ejemplo: 
+```sh
+$ ./node_modules/.bin/mysql-tab   --user root --password 1233456 --database test --path ./modelos 
+```
+Esto creara los modelos en el directorio `./modelos` a partir de las tablas encontradas en la base de datos `test`
 
 ## mysqlTable#constructor(config)
 
@@ -180,7 +199,6 @@ const test2=new model("test2",{
             type:"int",
             primary:true,
 			autoincrement:true
-
         },
         {
             name:"row1",

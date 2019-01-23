@@ -141,32 +141,49 @@ class mysqlTable extends connect
     * verificara la existencia de la tabla
     * en la base de datos y pasa lo metadatos  al valor de la promesa
     * @param {string} table - nombre de la tabla
+    * @param {boolean} createOfModel - indica si se obtendran los datos a partir del modelo existente
     * @return {Promise}
     */
-    __keysInTable(table)
+    __keysInTable(table,createOfModel=true)
     {
-        return new Promise((res,rej)=>
+        return new Promise(async (res,rej)=>
         {
-            this.query(`${this.__information_schema}'${table}' and TABLE_SCHEMA='${this.connection.config.database}'`)
-                .then(result=>{
-                    this.inModel(table,result.length==0)
-                        .then(res).catch(e=>
+            let result =  await this.query(`${this.__information_schema}'${table}' and TABLE_SCHEMA='${this.connection.config.database}'`)
+            if(result.error)
+            {
+                rej(result.error)
+            }  
+            if(createOfModel)
+            {
+                this.inModel(table,result.length==0)
+                    .then(res).catch(e=>
+                    {
+                        if(e===undefined)
                         {
-                            if(e===undefined)
-                            {
-                                if(result.length==0)
-                                    rej("la tabla no existe")
-                                else
-                                    this.__procesingKeys(table,result,res)
-                            }else
-                            {
-                                rej(e)
-                            }
-                        })
-                }).catch(rej)
+                            if(result.length==0)
+                                rej(`la tabla ${table} no existe`)
+                            else
+                                this.__procesingKeys(table,result,res)
+                        }else
+                        {
+                            rej(e)
+                        }
+                    })
+            }else
+            {        
+                if(result.length==0)
+                {
+                    rej( `la tabla ${table} no existe`)
+                }else
+                {
+                    this.__procesingKeys(table,result,res)
+                }
+            }  
+                
         })
 
     }
+    
     /**
     * intenta crear la base de datos
     *
@@ -177,7 +194,6 @@ class mysqlTable extends connect
         this.config=this.connection.config
         this.config.database=undefined
         this.connection=mysql.createConnection(this.config)
-
         this.connection.connect(ok=>
         {
             //console.log(ok)
@@ -186,7 +202,7 @@ class mysqlTable extends connect
                 this.query(`use ${database}`)
                     .then(()=>
                     {
-
+                        this.connection.config.database=this.config.database=database
                         this.__connectCallback(ok)
                         callback()
                     }).catch(e=>this.__connectCallback(e))

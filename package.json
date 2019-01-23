@@ -1,12 +1,16 @@
 {
   "name": "mysql-tab",
-  "version": "1.0.4",
-  "description": "interface de alto nivel para consultaas en mysql",
+  "version": "1.2.0",
+  "description": "interface de alto nivel para consultas en mysql",
   "main": "mysql-tab.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ever23/mysql-tab.git"
+  },
   "scripts": {
     "test": "mocha ./test/index.js",
     "test-model": "node ./test/basic/modelTable.js",
-    "lint": "eslint ./mysql-tab.js"
+    "lint": "eslint ./mysql-tab.js ./inverseEngine.js"
   },
   "keywords": [
     "mysql",
@@ -15,8 +19,9 @@
   "author": "enyerverfranco@gmail.com",
   "license": "MIT",
   "dependencies": {
-    "mysql": "^2.16.0",
-	"dbtabla":"^0.8.7"
+    "chalk": "^2.4.1",
+    "dbtabla": "^0.8.8",
+    "mysql": "^2.16.0"
   },
   "devDependencies": {
     "eslint": "^5.9.0",
