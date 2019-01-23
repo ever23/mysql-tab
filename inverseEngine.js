@@ -1,6 +1,5 @@
 const mysql = require("./mysql-tab")
 const Model = require("tabla-model")
-const CreateModel = require("tabla-model/createModel")
 const path = require("path")
 const EventEmiter = require("events")
 class inverseEngine extends EventEmiter
@@ -155,10 +154,17 @@ class inverseEngine extends EventEmiter
             this.parse().then(()=>
             {
                 this.__connect.end()
+                
                 for(let i=0;i<this.modelos.length;i++)
                 {
-                    let create = new CreateModel(this.modelos[i])
-                    create.save(path.join(dir,"/"+this.modelos[i].tabla+".js"))
+                    try
+                    {
+                        this.modelos[i].saveModel(path.join(dir,"/"+this.modelos[i].tabla+".js"))
+                    }catch(e)
+                    {
+                        return rej(e)
+                    }
+                    
                 }
                 this.emit("completFiles")
                 res()
