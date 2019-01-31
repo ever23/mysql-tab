@@ -1,6 +1,6 @@
 {
   "name": "mysql-tab",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "interface de alto nivel para consultas en mysql",
   "main": "mysql-tab.js",
   "repository": {
@@ -11,6 +11,9 @@
     "test": "mocha ./test/index.js",
     "test-model": "node ./test/basic/modelTable.js",
     "lint": "eslint ./mysql-tab.js ./inverseEngine.js"
+  },
+  "bin": {
+    "mysql-tab": "./bin/index.js"
   },
   "keywords": [
     "mysql",
