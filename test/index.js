@@ -1,6 +1,6 @@
-
- describe("Test de mysql-tab",()=>
- {
-    require('./mysql-tab')
-    require('./dbTabla')
- })
+const { describe } = require('node:test');
+describe("test de mysql-tab",()=>
+{
+    require("./mysql-tab.js")
+    require("./dbTabla.js")
+})

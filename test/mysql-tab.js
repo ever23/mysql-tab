@@ -1,7 +1,8 @@
+const { describe, it } = require('node:test');
 const assert= require("assert")
 const dbtabla = require('dbtabla')
 const connect = require('../mysql-tab.js')
-describe("Test de la clase sqlite3-tab",()=>
+describe("Test de la clase mysql-tab",()=>
 {
     it('verificacion de metodos',()=>
     {
@@ -12,8 +13,8 @@ describe("Test de la clase sqlite3-tab",()=>
         assert.equal(typeof mysql.tabla,"function")
         assert.equal(typeof mysql.query,"function")
         assert.equal(typeof mysql.connect,"function")
-        assert.equal(typeof mysql.__escapeString,"function")
-        assert.equal(typeof mysql.__keysInTable,"function")
+        assert.equal(typeof mysql._escapeString,"function")
+        assert.equal(typeof mysql._keysInTable,"function")
         assert.equal(typeof mysql.end,"function")
         mysql.end()
     })

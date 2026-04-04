@@ -1,6 +1,7 @@
 const mysql=require("mysql")
 const connectionMysql=require("mysql/lib/Connection")
-const {MYSQL_DB,connect}=require("dbtabla")
+const { MYSQL_DB, connect } = require("dbtabla")
+const dbResult = require("dbtabla/lib/dbResult")
 /**
 * mysqlTable
 * crea una conexion a una base de datos mysql
@@ -23,9 +24,9 @@ class mysqlTable extends connect
             if(connect)
                 this.connect()
         }
-        this.__escapeChar="`"
-        this.__information_schema = "SELECT information_schema.columns.* FROM information_schema.columns WHERE table_name="
-        this.__connectCallback=()=>{}
+        this._escapeChar="`"
+        this._information_schema = "SELECT information_schema.columns.* FROM information_schema.columns WHERE table_name="
+        this._connectCallback=()=>{}
     }
     /**
     * envia una sentencia START TRANSACTION a la base de datos
@@ -64,7 +65,7 @@ class mysqlTable extends connect
     */
     connect(callback=()=>{})
     {
-        this.__connectCallback=callback
+        this._connectCallback=callback
 
         this.connection.connect(ok=>
         {
@@ -99,7 +100,7 @@ class mysqlTable extends connect
                 {
                     if(error.errno==1049 )
                     {
-                        this.__createDatabase(()=>
+                        this._createDatabase(()=>
                         {
                             this.query(query).then(resolver).catch(reject)
                         })
@@ -107,9 +108,8 @@ class mysqlTable extends connect
                         reject(error)
                     }
 
-                }else
-                {
-                    resolver(result)
+                } else {
+                    resolver(new dbResult(result, this._escapeChar))
                 }
 
             })
@@ -120,7 +120,7 @@ class mysqlTable extends connect
     * @param {string} str - texto
     * @return {string}
     */
-    __escapeString(str)
+    _escapeString(str)
     {
         let result=this.connection.escape(str)
         if(/^'.*'$/.test(result))
@@ -144,11 +144,11 @@ class mysqlTable extends connect
     * @param {boolean} createOfModel - indica si se obtendran los datos a partir del modelo existente
     * @return {Promise}
     */
-    __keysInTable(table,createOfModel=true)
+    _keysInTable(table,createOfModel=true)
     {
         return new Promise(async (res,rej)=>
         {
-            let result =  await this.query(`${this.__information_schema}'${table}' and TABLE_SCHEMA='${this.connection.config.database}'`)
+            let result =  await this.query(`${this._information_schema}'${table}' and TABLE_SCHEMA='${this.connection.config.database}'`)
             if(result.error)
             {
                 rej(result.error)
@@ -163,7 +163,7 @@ class mysqlTable extends connect
                             if(result.length==0)
                                 rej(`la tabla ${table} no existe`)
                             else
-                                this.__procesingKeys(table,result,res)
+                                this._procesingKeys(table,result,res)
                         }else
                         {
                             rej(e)
@@ -176,7 +176,7 @@ class mysqlTable extends connect
                     rej( `la tabla ${table} no existe`)
                 }else
                 {
-                    this.__procesingKeys(table,result,res)
+                    this._procesingKeys(table,result,res)
                 }
             }  
                 
@@ -188,7 +188,7 @@ class mysqlTable extends connect
     * intenta crear la base de datos
     *
     */
-    __createDatabase(callback)
+    _createDatabase(callback)
     {
         let database =this.connection.config.database
         this.config=this.connection.config
@@ -203,10 +203,10 @@ class mysqlTable extends connect
                     .then(()=>
                     {
                         this.connection.config.database=this.config.database=database
-                        this.__connectCallback(ok)
+                        this._connectCallback(ok)
                         callback()
-                    }).catch(e=>this.__connectCallback(e))
-            }).catch(e=>this.__connectCallback(e))
+                    }).catch(e=>this._connectCallback(e))
+            }).catch(e=>this._connectCallback(e))
         })
     }
 
@@ -217,25 +217,24 @@ class mysqlTable extends connect
     * @param {function} callback - funcion a ejecutar cuando se obtengan los metadatos
     *
     */
-    __procesingKeys(table,data,callback)
-    {
-        let colums=new Array(data.length)
-        for(let item of data)
-        {
-            colums[item.ORDINAL_POSITION-1]={
-                name:item.COLUMN_NAME,
-                type:item.COLUMN_TYPE,
-                defaultNull:item.IS_NULLABLE == "YE" ? true : false,
-                primary:item.COLUMN_KEY == "PRI",
-                unique:item.COLUMN_KEY == "UNI",
-                defaul:item.COLUMN_DEFAULT,
-                autoincrement:item.EXTRA == "auto_increment"
+    _procesingKeys(table, data, callback) {
+        let colums = new Array(data.length)
+        for (let item of data) {
+            colums[item.ORDINAL_POSITION - 1] = {
+                name: item.COLUMN_NAME,
+                type: item.COLUMN_TYPE,
+                defaultNull: item.IS_NULLABLE == "YES" ? true : false,
+                primary: item.COLUMN_KEY == "PRI",
+                unique: item.COLUMN_KEY == "UNI",
+                default: item.COLUMN_DEFAULT,
+                autoincrement: item.EXTRA == "auto_increment"
             }
 
         }
         callback({
-            tabla:table,
-            colums:colums
+            tabla: table,
+            colums: colums,
+            colum: colums
 
         })
     }

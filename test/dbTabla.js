@@ -1,10 +1,10 @@
+const { describe, it } = require('node:test');
 const assert= require("assert")
 const dbtabla = require("dbtabla")
 const connect = require('../mysql-tab.js')
 
 /*const sqlite3Ok = require("../lib/sqlite3Ok.js")*/
-const dbResult = require("dbtabla/lib/dbResult")
-const dbRow = require("dbtabla/lib/dbRow")
+const { dbResult, dbRow } = require("dbtabla")
 const path = require('path')
 function createAndInsert(callback)
 {
@@ -93,7 +93,7 @@ describe("Test de la clase mysql-tab :tabla",()=>
                 resolve(ok)
             }).catch(e=>
             {
-                console.log(test1.__lastSql)
+                console.log(test1.lastSql)
                 mysql.end()
                 reject(e)
             })
@@ -210,7 +210,7 @@ describe("Test de la clase mysql-tab :tabla",()=>
         {
             return test3.select().then(d=>
             {
-                test3.__connection.end()
+                test3._connection.end()
                 assert.ok(test3 instanceof dbtabla,"debe retornar un objeto dbtabla")
             })
 
@@ -242,7 +242,7 @@ describe("Test de la clase mysql-tab :tabla",()=>
         {
             return test4.select().then(d=>
             {
-                test4.__connection.end()
+                test4._connection.end()
                 assert.ok(test4 instanceof dbtabla,"debe retornar un objeto dbtabla")
             })
 
