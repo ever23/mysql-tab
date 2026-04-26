@@ -13,6 +13,7 @@
 - [Uso](#uso)
 - [Ingeniería Inversa](#ingeniería-inversa-a-una-base-de-datos)
 - [Documentación del API](#documentación-del-api)
+- [Asistencia para IA](#asistencia-para-ia)
 
 ## Instalación
 
@@ -121,6 +122,14 @@ Gestión simplificada de transacciones atómicas de forma asíncrona.
 
 ### `mysqlTable#end()`
 Libera el pool de conexiones y cierra la sesión con el servidor MySQL.
+
+---
+
+## Asistencia para IA
+
+Este proyecto incluye una **Skill de IA** diseñada para ayudar a agentes y asistentes inteligentes a entender y utilizar la librería de forma óptima, siguiendo los patrones de Active Record y gestión de modelos en MySQL.
+
+Puedes encontrar las directrices detalladas en: [.agents/skills/mysql-tab/SKILL.md](.agents/skills/mysql-tab/SKILL.md)
 
 [npm-image]: https://img.shields.io/npm/v/mysql-tab.svg
 [npm-url]: https://npmjs.org/package/mysql-tab
