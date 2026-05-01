@@ -23,7 +23,7 @@
   "dependencies": {
     "chalk": "^2.4.1",
     "dbtabla": "^2.1.2",
-    "mysql": "^2.16.0"
+    "mysql2": "^3.22.3"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
