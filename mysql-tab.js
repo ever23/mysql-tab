@@ -1,7 +1,6 @@
 const mysql=require("mysql2")
 const connectionMysql=require("mysql2/lib/connection")
-const { MYSQL_DB, connect } = require("dbtabla")
-const dbResult = require("dbtabla/lib/dbResult")
+const { MYSQL_DB, connect, dbResult } = require("dbtabla")
 /**
 * mysqlTable
 * crea una conexion a una base de datos mysql
