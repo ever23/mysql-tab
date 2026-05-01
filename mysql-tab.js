@@ -1,5 +1,5 @@
-const mysql=require("mysql")
-const connectionMysql=require("mysql/lib/Connection")
+const mysql=require("mysql2")
+const connectionMysql=require("mysql2/lib/connection")
 const { MYSQL_DB, connect } = require("dbtabla")
 const dbResult = require("dbtabla/lib/dbResult")
 /**
