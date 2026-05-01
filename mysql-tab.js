@@ -88,31 +88,31 @@ class mysqlTable extends connect
     * @param {object} config - configuracion de la query mysql
     * @return {Promise}
     */
-    query(query,config={})
-    {
-        return new Promise((resolver,reject)=>
-        {
-            this.connection.query(query,config,(error,result)=>
-            {
-                //console.log(fiels)
-                if(error)
-                {
-                    if(error.errno==1049 )
-                    {
-                        this._createDatabase(()=>
-                        {
-                            this.query(query).then(resolver).catch(reject)
-                        })
-                    }else {
-                        reject(error)
+    query(query, config = {}) {
+        this.lastSql = query;
+        return new Promise((resolver, reject) => {
+            const options = (typeof config === 'object' && Object.keys(config).length > 0)
+                ? { sql: query, ...config }
+                : query;
+
+            this.connection.query(options, (error, result) => {
+                if (error) {
+                    if (error.errno == 1049) {
+                        this._createDatabase(() => {
+                            this.query(query, config).then(resolver).catch(reject);
+                        });
+                    } else {
+                        reject(error);
                     }
-
                 } else {
-                    resolver(new dbResult(result, this._escapeChar))
+                    if (Array.isArray(result)) {
+                        resolver(new dbResult(this, result));
+                    } else {
+                        resolver(result);
+                    }
                 }
-
-            })
-        })
+            });
+        });
     }
     /**
     * escapa el texto sql
