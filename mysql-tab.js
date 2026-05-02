@@ -249,23 +249,15 @@ class mysqlTable extends connect
         let database = this.config.database;
         let tempConfig = { ...this.config, database: undefined };
 
-        // Si es un Pool, lo cerramos para crear una conexión temporal
+        // Si es un Pool, abrimos una conexión temporal sin cerrar el pool
         if (this.connection.getConnection) {
-            this.connection.end(() => {
-                const tempConn = mysql.createConnection(tempConfig);
-                tempConn.connect(err => {
+            const tempConn = mysql.createConnection(tempConfig);
+            tempConn.connect(err => {
+                if (err) return this._connectCallback(err);
+                tempConn.query(`CREATE DATABASE IF NOT EXISTS \`${database}\`;`, (err) => {
+                    tempConn.end();
                     if (err) return this._connectCallback(err);
-                    tempConn.query(`CREATE DATABASE IF NOT EXISTS \`${database}\`;`, (err) => {
-                        if (err) {
-                            tempConn.end();
-                            return this._connectCallback(err);
-                        }
-                        tempConn.end();
-                        // Re-creamos el Pool ahora con la base de datos
-                        this.config.database = database;
-                        this.connection = mysql.createPool(this.config);
-                        callback();
-                    });
+                    callback();
                 });
             });
         } else {
