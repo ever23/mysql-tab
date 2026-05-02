@@ -4,20 +4,28 @@
 [![NPM Downloads][downloads-image]][downloads-url]
 [![Node.js Version][node-version-image]][node-version-url]
 
-**mysql-tab** es la solución definitiva y lista para producción para interactuar con bases de datos MySQL en Node.js. Al integrar de manera nativa la potencia de **dbtabla** (la capa de abstracción de base de datos) y **tabla-model** (la definición de esquemas), ofrece al desarrollador una interfaz unificada y fluida para la gestión de datos a gran escala.
+**mysql-tab** es una potente interfaz de alto nivel para interactuar con bases de datos MySQL y MariaDB en Node.js. Diseñada bajo el patrón **Active Record**, permite gestionar la persistencia de datos de forma fluida, segura y orientada a objetos, eliminando la necesidad de escribir SQL manual para las tareas comunes.
 
-## Tabla de contenidos
+## 🚀 Características Principales
 
-- [Instalación](#instalación)
-- [Introducción](#introducción)
-- [Uso](#uso)
-- [Ingeniería Inversa](#ingeniería-inversa-a-una-base-de-datos)
-- [Documentación del API](#documentación-del-api)
-- [Asistencia para IA](#asistencia-para-ia)
+*   **Abstracción Total**: Realiza operaciones CRUD complejas usando objetos de JavaScript.
+*   **Patrón Active Record**: Los resultados de las consultas son objetos inteligentes con métodos `.update()` y `.delete()`.
+*   **Gestión de Esquemas**: Sincronización automática de tablas basada en modelos definidos.
+*   **Fluent Query Builder**: Motor de selección polimórfico con soporte para Joins dinámicos.
+*   **Transacciones Atómicas**: Soporte nativo para transacciones (Commit/Rollback).
+*   **Ingeniería Inversa**: CLI integrado para generar modelos a partir de bases de datos existentes.
 
-## Instalación
+## 📚 Ecosistema dbtabla
 
-`mysql-tab` es el paquete principal que necesitas para gestionar tu base de datos MySQL de forma profesional:
+Este paquete forma parte de un ecosistema modular. También puedes utilizar:
+
+*   **[tabla-model](https://github.com/ever23/tabla-model)**: El motor de definición de esquemas (requerido para definir modelos).
+*   **[sqlite3-tab](https://github.com/ever23/sqlite3-tab)**: Si necesitas soporte para SQLite3.
+*   **[pg-table](https://github.com/ever23/pg-table)**: Si necesitas soporte para PostgreSQL.
+
+---
+
+## 📦 Instalación
 
 ```sh
 $ npm install mysql-tab
@@ -25,111 +33,159 @@ $ npm install mysql-tab
 
 ---
 
-## Introducción
+## 🛠️ Inicio Rápido
 
-`mysql-tab` actúa como la interfaz final que simplifica la interacción con MySQL, ocultando la complejidad del driver nativo y las abstracciones subyacentes. Internamente, utiliza un ecosistema diseñado para maximizar la productividad:
+### 1. Conexión y Configuración
+Instancia la conexión pasando un objeto de configuración estándar de MySQL.
 
-1.  **Capa de Datos de Alto Nivel**: Utiliza las abstracciones de `dbtabla` para realizar operaciones CRUD complejas mediante objetos de JavaScript, evitando el SQL manual.
-2.  **Sincronización de Esquemas**: Gracias a `tabla-model`, tus tablas pueden crearse e inicializarse automáticamente al arrancar la aplicación basándose en tus definiciones de modelos.
-3.  **Gestión Inteligente**: Incluye capacidades avanzadas como la creación automática de la base de datos si esta no existe y herramientas de ingeniería inversa para esquemas preexistentes.
+```javascript
+const MySQL = require('mysql-tab');
 
----
-
-## Uso
-
-Para empezar, solo necesitas configurar la conexión y definir tus requerimientos. `mysql-tab` se encargará de gestionar el pool de conexiones y la integridad de tus tablas.
-
-[Más documentación sobre dbTabla..](https://github.com/ever23/dbtabla#dbtabla-1)
-
-### Ejemplo de uso rápido:
-```js
-const MySQL = require("mysql-tab");
-
-// Conexión estándar
-let db = new MySQL({
+const db = new MySQL({
     host: 'localhost',
     user: 'root',
     password: 'password',
-    database: 'mi_empresa'
+    database: 'mi_proyecto'
 });
-
-let tabla = db.tabla("ventas");
-
-// Inserción directa sin preocuparte por la sintaxis SQL manual
-tabla.insert({ producto: "Laptop", cantidad: 5, precio: 1200.50 })
-    .then(res => console.log("Venta registrada:", res))
-    .catch(err => console.error("Error:", err));
 ```
 
-### El flujo recomendado (Model-Driven)
-Define la estructura de tus datos en archivos separados y permite que `mysql-tab` orqueste la base de datos por ti.
+### 2. Definición de Modelos (Opcional pero recomendado)
+Utiliza `tabla-model` para definir la estructura de tus datos.
 
-```js
-// ./model/usuario.js
-const Model = require("tabla-model");
+```javascript
+// model/Usuario.js
+const Model = require('tabla-model');
 
-module.exports = new Model("usuarios", {
-    colums: [ 
-        { name: "id", type: "int", primary: true, autoincrement: true },
-        { name: "username", type: "varchar(50)", unique: true },
-        { name: "email", type: "varchar(100)" }
+module.exports = new Model('usuarios', {
+    colums: [
+        { name: 'id', type: 'int', primary: true, autoincrement: true },
+        { name: 'nombre', type: 'varchar(100)' },
+        { name: 'email', type: 'varchar(100)', unique: true }
     ]
 });
 ```
 
-#### Integración en el Servidor:
-```js
-const MySQL = require("mysql-tab");
-const path = require("path");
-
-const db = new MySQL({ /* config */ });
-
-// Carga global: mysql-tab leerá tus modelos y creará las tablas automáticamente
-db.pathModels(path.join(__dirname, "model"));
-
-// Consultar y manipular filas como objetos interactivos
-db.tabla("usuarios").selectById(1).then(async (user) => {
-    if (user) {
-        user.username = "nuevo_alias";
-        await user.update(); // mysql-tab genera el SQL de actualización automáticamente
-    }
-});
+Registra tus modelos para que `mysql-tab` gestione las tablas por ti:
+```javascript
+const path = require('path');
+db.pathModels(path.join(__dirname, 'model'));
 ```
 
 ---
 
-## Ingeniería Inversa a una base de datos
+## 📖 Guía de Uso: Operaciones de Tabla
 
-Si ya dispones de una base de datos MySQL en producción, `mysql-tab` puede generar automáticamente los archivos de modelo por ti mediante su herramienta de línea de comandos.
+Obtén una instancia de la tabla para empezar a operar:
+```javascript
+const usuarios = db.tabla('usuarios');
+```
 
-### Ejemplo:
+### Inserción de Datos
+```javascript
+// Inserción por objeto
+await usuarios.insert({ nombre: 'Antigravity', email: 'ai@dev.com' });
+
+// Inserción posicional (según el orden de las columnas)
+await usuarios.insert(null, 'Nuevo Usuario', 'user@example.com');
+```
+
+### Consultas (Select)
+El método `.select()` es extremadamente versátil.
+
+```javascript
+// 1. Selección simple con filtros (WHERE)
+const todos = await usuarios.select("id > 10");
+
+// 2. Selección de campos específicos
+const nombres = await usuarios.select(["nombre", "email"], "id < 50");
+
+// 3. Selección con Joins Dinámicos
+// Prefijos: '>' Right Join, '<' Left Join, '=' Inner Join
+const conPerfiles = await usuarios.select(
+    ["u.nombre", "p.bio"], 
+    { "<perfiles": "u.id = p.id_usuario" }, // Left Join
+    "u.estado = 'activo'"
+);
+
+// 4. Búsqueda por ID
+const user = await usuarios.selectById(1);
+
+// 5. Búsqueda Inteligente (LIKE)
+const resultados = await usuarios.busqueda("Antigravity", ["nombre", "email"]);
+```
+
+### Actualización y Borrado
+```javascript
+// Actualización masiva o filtrada con cláusula string
+await usuarios.update({ estado: 'bloqueado' }, "id = 1");
+
+// Actualización por ID (más directo)
+await usuarios.updateById({ estado: 'activo' }, 1);
+
+// Borrado
+await usuarios.delete("id = 5");
+
+// Borrado por ID
+await usuarios.deleteById(5);
+```
+
+---
+
+## 💎 El Poder de Active Record (dbRow)
+
+Cuando realizas un `select`, obtienes instancias de `dbRow`. Estos objetos "conocen" su origen y pueden gestionarse a sí mismos.
+
+```javascript
+const user = await usuarios.selectOne("id = 1");
+
+if (user) {
+    user.nombre = "Nombre Editado";
+    await user.update(); // Genera y ejecuta el SQL UPDATE automáticamente
+    
+    // O si deseas eliminarlo
+    // await user.delete();
+}
+```
+
+---
+
+## 🔐 Transacciones
+Asegura la integridad de tus datos envolviendo operaciones críticas.
+
+```javascript
+try {
+    await db.beginTransaction();
+
+    await pedidos.insert({ ... });
+    await stock.update({ cantidad: -1 }, "id_producto = 10");
+
+    await db.commit();
+} catch (error) {
+    await db.rollback();
+    console.error("Transacción fallida, cambios revertidos:", error);
+}
+```
+
+---
+
+## 🏗️ Ingeniería Inversa (CLI)
+
+Si ya tienes una base de datos, puedes generar los modelos automáticamente ejecutando:
+
 ```sh
-$ ./node_modules/.bin/mysql-tab --user root --password secret --database mi_db_existente --path ./modelos
+$ npx mysql-tab --user root --password secret --database mi_db --path ./models
 ```
 
 ---
 
-## Documentación del API
+## 🧪 Pruebas
+Para ejecutar los tests del proyecto:
+```sh
+$ npm test
+```
 
-### `mysqlTable#constructor(config)`
-*   `config {object}`: Configuración estándar de MySQL o instancia de conexión nativa.
-
-### `mysqlTable#tabla(tabla, [callback], [verify])`
-Estructura y retorna un objeto `dbTabla` (abstracción de alto nivel).
-
-### `mysqlTable#beginTransaction()` / `commit()` / `rollback()`
-Gestión simplificada de transacciones atómicas de forma asíncrona.
-
-### `mysqlTable#end()`
-Libera el pool de conexiones y cierra la sesión con el servidor MySQL.
-
----
-
-## Asistencia para IA
-
-Este proyecto incluye una **Skill de IA** diseñada para ayudar a agentes y asistentes inteligentes a entender y utilizar la librería de forma óptima, siguiendo los patrones de Active Record y gestión de modelos en MySQL.
-
-Puedes encontrar las directrices detalladas en: [.agents/skills/mysql-tab/SKILL.md](.agents/skills/mysql-tab/SKILL.md)
+## 📄 Licencia
+Este proyecto está bajo la Licencia MIT.
 
 [npm-image]: https://img.shields.io/npm/v/mysql-tab.svg
 [npm-url]: https://npmjs.org/package/mysql-tab

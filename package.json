@@ -8,7 +8,7 @@
     "url": "git+https://github.com/ever23/mysql-tab.git"
   },
   "scripts": {
-    "test": "node --test ./test/index.js",
+    "test": "docker-compose up -d && node --test ./test/index.js && docker-compose down || docker-compose down",
     "lint": "eslint ./mysql-tab.js ./inverseEngine.js",
     "inverse": "node ./bin/index.js"
   },

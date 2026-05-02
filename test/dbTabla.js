@@ -14,7 +14,8 @@ function createAndInsert(callback)
         const mysql= new connect({
             host     : 'localhost',
             user     : 'root',
-            database :'test_mysql_tab'
+            password : 'secret',
+            database :'test_db'
         })
         let test1=mysql.tabla('test1')
         test1.insert(null,"text",12,"text2").then(ok=>
@@ -38,7 +39,8 @@ describe("Test de la clase mysql-tab :tabla",()=>
             const mysql= new connect({
                 host     : 'localhost',
                 user     : 'root',
-                database :'test_mysql_tab'
+                password : 'secret',
+                database :'test_db'
             })
             mysql.end()
             resolve(mysql.tabla('test1'))
@@ -57,7 +59,8 @@ describe("Test de la clase mysql-tab :tabla",()=>
             const mysql= new connect({
                 host     : 'localhost',
                 user     : 'root',
-                database :'test_mysql_tab'
+                password : 'secret',
+                database :'test_db'
             })
             mysql.query("create table IF NOT EXISTS `test1` (`id` int auto_increment ,`row1` varchar(100) default 'ever',`row2` int not null,`row3` text null,primary key (`id`))")
                 .then(ok=>
@@ -84,7 +87,8 @@ describe("Test de la clase mysql-tab :tabla",()=>
             const mysql= new connect({
                 host     : 'localhost',
                 user     : 'root',
-                database :'test_mysql_tab'
+                password : 'secret',
+                database :'test_db'
             })
             let test1=mysql.tabla('test1')
             test1.insert(null,"text",12,"text2").then(ok=>
@@ -191,7 +195,8 @@ describe("Test de la clase mysql-tab :tabla",()=>
             const mysql= new connect({
                 host     : 'localhost',
                 user     : 'root',
-                database :'test_mysql_tab'
+                password : 'secret',
+                database :'test_db'
             })
             mysql.pathModels(path.dirname(__filename)+"/modelo")
             try{
@@ -223,7 +228,8 @@ describe("Test de la clase mysql-tab :tabla",()=>
             const mysql= new connect({
                 host     : 'localhost',
                 user     : 'root',
-                database :'test_mysql_tab'
+                password : 'secret',
+                database :'test_db'
             })
             mysql.pathModels(path.dirname(__filename)+"/modelo")
             try{
@@ -256,14 +262,15 @@ describe("Test de la clase mysql-tab :tabla",()=>
                 const mysql= new connect({
                     host     : 'localhost',
                     user     : 'root',
-                    database :'test_mysql_tab'
+                    password : 'secret',
+                    database :'test_db'
                 })
                 mysql.pathModels(path.dirname(__filename)+"/modelo")
                 let test3=mysql.tabla("test3"),
                     test4=mysql.tabla("test4")
                 mysql.beginTransaction().then(async()=>
                 {
-                    let ok4=await test4.insert(null,"commit",12,"text2")
+                    let ok4=await test4.insert(null,"commit",12,"2026-05-02")
                     if(ok4.error)
                         throw ok4
                     let ok3=await test3.insert(null,"commit",ok4.insertId,"text2")
@@ -291,14 +298,15 @@ describe("Test de la clase mysql-tab :tabla",()=>
                 const mysql= new connect({
                     host     : 'localhost',
                     user     : 'root',
-                    database :'test_mysql_tab'
+                    password : 'secret',
+                    database :'test_db'
                 })
                 mysql.pathModels(path.dirname(__filename)+"/modelo")
                 let test3=mysql.tabla("test3"),
                     test4=mysql.tabla("test4")
                 mysql.beginTransaction().then(async()=>
                 {
-                    let ok4=await test4.insert(null,"rollback",12,"text2")
+                    let ok4=await test4.insert(null,"rollback",12,"2026-05-02")
                     if(ok4.error)
                         throw ok4
                     let ok3=await test3.insert(null,"rollback",34,"text2")

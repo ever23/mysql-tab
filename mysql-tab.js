@@ -11,76 +11,140 @@ class mysqlTable extends connect
     * @param {object|Connection} param - configuracion para mysql o objeto de conexion mysql
     * @param {boolean} connect - indica si connectata al instante
     */
-    constructor(params,connect=true)
-    {
-        if(params instanceof connectionMysql)
-        {
-            super({},MYSQL_DB)
-            this.connection=params
-        }else {
-            super(params,MYSQL_DB)
-            this.connection=mysql.createConnection(this.config)
-            if(connect)
+    constructor(params, connect = true) {
+        // Detectamos si params es una instancia de Pool o Connection
+        const isPool = params && (params.constructor.name === 'Pool' || typeof params.query === 'function' && params.getConnection);
+        const isConn = params && (params.constructor.name === 'Connection' || params instanceof connectionMysql);
+
+        if (isPool || isConn) {
+            super({}, MYSQL_DB)
+            this.connection = params
+        } else {
+            super(params, MYSQL_DB)
+            // Usamos Pool por defecto para mejor gestión de conexiones
+            this.connection = mysql.createPool(this.config)
+            // En Pool no hace falta llamar a .connect() manualmente, 
+            // pero mantenemos la compatibilidad si se desea testear la conexión
+            if (connect)
                 this.connect()
         }
-        this._escapeChar="`"
+        this._escapeChar = "`"
         this._information_schema = "SELECT information_schema.columns.* FROM information_schema.columns WHERE table_name="
-        this._connectCallback=()=>{}
+        this._connectCallback = () => { }
+        this._transactionConn = null
+
+        // Definimos _escapeString en la instancia para que no sea sobreescrita por Connect
+        this._escapeString = (str) => {
+            // El Pool también tiene el método escape
+            let result = this.connection.escape(str)
+            if (/^'.*'$/.test(result)) {
+                return result.slice(1, -1)
+            }
+            return result
+        }
     }
+
+    /**
+    * Obtiene una conexión dedicada para transacciones si no existe una.
+    * @returns {Promise<Connection>}
+    */
+    _getTransactionConn() {
+        return new Promise((resolve, reject) => {
+            if (this._transactionConn) return resolve(this._transactionConn);
+            
+            // Si this.connection es una Connection simple (no Pool), la usamos directamente
+            if (!this.connection.getConnection) {
+                this._transactionConn = this.connection;
+                return resolve(this._transactionConn);
+            }
+
+            this.connection.getConnection((err, conn) => {
+                if (err) return reject(err);
+                this._transactionConn = conn;
+                resolve(conn);
+            });
+        });
+    }
+
     /**
     * envia una sentencia START TRANSACTION a la base de datos
     *
     * @param {object} config - configuracion de la query mysql
     * @return {Promise}
     */
-    beginTransaction(config={})
-    {
-        return this.query("START TRANSACTION",config)
+    async beginTransaction(config = {}) {
+        await this._getTransactionConn();
+        return this.query("START TRANSACTION", config);
     }
+
     /**
     * envia una sentencia commit a la base de datos
     *
     * @param {object} config - configuracion de la query mysql
     * @return {Promise}
     */
-    commit(config={})
-    {
-        return this.query("COMMIT",config)
+    async commit(config = {}) {
+        try {
+            return await this.query("COMMIT", config);
+        } finally {
+            this._releaseTransactionConn();
+        }
     }
+
     /**
     * envia una sentencia rollback a la base de datos
     *
     * @param {object} config - configuracion de la query mysql
     * @return {Promise}
     */
-    rollback(config={})
-    {
-        return this.query("ROLLBACK",config)
+    async rollback(config = {}) {
+        try {
+            return await this.query("ROLLBACK", config);
+        } finally {
+            this._releaseTransactionConn();
+        }
+    }
+
+    /**
+     * Libera la conexión de transacción de vuelta al pool
+     */
+    _releaseTransactionConn() {
+        if (this._transactionConn) {
+            // Solo liberamos si viene de un Pool
+            if (typeof this._transactionConn.release === 'function') {
+                this._transactionConn.release();
+            }
+            this._transactionConn = null;
+        }
     }
 
     /**
     * connecta con la base de datos
     * @param {function} callback - funcion que se  ejecutara al connectar
     */
-    connect(callback=()=>{})
-    {
-        this._connectCallback=callback
-
-        this.connection.connect(ok=>
-        {
-            if(ok)
-            {
-
-                if(ok.errno!=1049)
+    connect(callback = () => { }) {
+        this._connectCallback = callback
+        
+        // En un Pool, podemos usar getConnection para verificar la salud de la conexión
+        if (this.connection.getConnection) {
+            this.connection.getConnection((err, conn) => {
+                if (err) {
+                    if (err.errno != 1049) callback(err);
+                } else {
+                    conn.release();
+                    callback();
+                }
+            });
+        } else {
+            this.connection.connect(ok => {
+                if (ok) {
+                    if (ok.errno != 1049) callback(ok)
+                } else {
                     callback(ok)
-            }else {
-                callback(ok)
-            }
-
-        })
+                }
+            })
+        }
     }
-
-    
 
     /**
     * envia una consulta a la base de datos
@@ -95,7 +159,10 @@ class mysqlTable extends connect
                 ? { sql: query, ...config }
                 : query;
 
-            this.connection.query(options, (error, result) => {
+            // Si hay una transacción activa, usamos esa conexión. Si no, usamos el pool.
+            const runner = this._transactionConn || this.connection;
+
+            runner.query(options, (error, result) => {
                 if (error) {
                     if (error.errno == 1049) {
                         this._createDatabase(() => {
@@ -119,16 +186,6 @@ class mysqlTable extends connect
     * @param {string} str - texto
     * @return {string}
     */
-    _escapeString(str)
-    {
-        let result=this.connection.escape(str)
-        if(/^'.*'$/.test(result))
-        {
-            return result.slice(1,-1)
-        }
-        return result
-
-    }
     /**
     * termina la conexion
     */
@@ -147,7 +204,7 @@ class mysqlTable extends connect
     {
         return new Promise(async (res,rej)=>
         {
-            let result =  await this.query(`${this._information_schema}'${table}' and TABLE_SCHEMA='${this.connection.config.database}'`)
+            let result =  await this.query(`${this._information_schema}'${table}' and TABLE_SCHEMA='${this.config.database}'`)
             if(result.error)
             {
                 rej(result.error)
@@ -187,26 +244,45 @@ class mysqlTable extends connect
     * intenta crear la base de datos
     *
     */
-    _createDatabase(callback)
-    {
-        let database =this.connection.config.database
-        this.config=this.connection.config
-        this.config.database=undefined
-        this.connection=mysql.createConnection(this.config)
-        this.connection.connect(ok=>
-        {
-            //console.log(ok)
-            this.query(`CREATE DATABASE ${database};`).then(()=>
-            {
-                this.query(`use ${database}`)
-                    .then(()=>
-                    {
-                        this.connection.config.database=this.config.database=database
-                        this._connectCallback(ok)
-                        callback()
-                    }).catch(e=>this._connectCallback(e))
-            }).catch(e=>this._connectCallback(e))
-        })
+    _createDatabase(callback) {
+        // En Pool, el config está en connection.pool.config o lo tomamos de this.config
+        let database = this.config.database;
+        let tempConfig = { ...this.config, database: undefined };
+
+        // Si es un Pool, lo cerramos para crear una conexión temporal
+        if (this.connection.getConnection) {
+            this.connection.end(() => {
+                const tempConn = mysql.createConnection(tempConfig);
+                tempConn.connect(err => {
+                    if (err) return this._connectCallback(err);
+                    tempConn.query(`CREATE DATABASE IF NOT EXISTS \`${database}\`;`, (err) => {
+                        if (err) {
+                            tempConn.end();
+                            return this._connectCallback(err);
+                        }
+                        tempConn.end();
+                        // Re-creamos el Pool ahora con la base de datos
+                        this.config.database = database;
+                        this.connection = mysql.createPool(this.config);
+                        callback();
+                    });
+                });
+            });
+        } else {
+            // Caso de conexión simple (Legacy)
+            this.connection.end(() => {
+                this.connection = mysql.createConnection(tempConfig);
+                this.connection.connect(ok => {
+                    this.query(`CREATE DATABASE IF NOT EXISTS \`${database}\`;`).then(() => {
+                        this.query(`use \`${database}\``)
+                            .then(() => {
+                                this.config.database = database;
+                                callback();
+                            }).catch(e => this._connectCallback(e))
+                    }).catch(e => this._connectCallback(e))
+                })
+            });
+        }
     }
 
     /**
