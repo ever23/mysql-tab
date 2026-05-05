@@ -114,6 +114,35 @@ const user = await usuarios.selectById(1);
 const resultados = await usuarios.busqueda("Antigravity", ["nombre", "email"]);
 ```
 
+#### Sintaxis Avanzada de Filtrado (Where Object)
+Al usar un objeto en el parámetro `where`, puedes usar prefijos y sufijos para operadores especiales:
+*   **Sufijos:** `campo%` (LIKE), `campo!` (!=), `campo>` (>), `campo<` (<), `campo>=` (>=), `campo<=` (<=).
+*   **Prefijos:** `||campo` (OR), `&&campo` (AND).
+
+```javascript
+// Ejemplo: WHERE estado = 'activo' OR nombre LIKE 'Anti%'
+await usuarios.select({ "estado": "activo", "||nombre%": "Anti%" });
+```
+
+> [!IMPORTANT]
+> **Uso de Parámetros Polimórficos:**
+> Si pasas un **objeto** como primer argumento en `.select()`, la librería lo interpretará como una definición de **Joins**. Para usar un objeto de filtrado `where` sin definir campos ni joins, utiliza `null`:
+> ```javascript
+> // Correcto: (campos, joins, where)
+> await tabla.select(null, null, { "activo": 1 });
+> ```
+
+### Sintaxis de Objeto Único (Recomendada)
+Esta es la forma más segura y clara de realizar consultas, evitando problemas de polimorfismo:
+
+```javascript
+await usuarios.select({
+    where: { "id_usuario": 1, "tipo!": "admin" },
+    order: "id DESC",
+    limit: 10
+});
+```
+
 ### Actualización y Borrado
 ```javascript
 // Actualización masiva o filtrada con cláusula string
