@@ -23,7 +23,7 @@
   "license": "MIT",
   "dependencies": {
     "chalk": "^2.4.1",
-    "dbtabla": "^2.1.2",
+    "dbtabla": "^2.2.9",
     "mysql2": "^3.22.3"
   },
   "devDependencies": {
