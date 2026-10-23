@@ -211,20 +211,17 @@ class mysqlTable extends connect
             }  
             if(createOfModel)
             {
-                this.inModel(table,result.length==0)
-                    .then(res).catch(e=>
-                    {
-                        if(e===undefined)
-                        {
-                            if(result.length==0)
+                if (result.length == 0) {
+                    this.inModel(table, true)
+                        .then(res).catch(e => {
+                            if (e === undefined)
                                 rej(`la tabla ${table} no existe`)
                             else
-                                this._procesingKeys(table,result,res)
-                        }else
-                        {
-                            rej(e)
-                        }
-                    })
+                                rej(e)
+                        })
+                } else {
+                    this._procesingKeys(table, result, res)
+                }
             }else
             {        
                 if(result.length==0)
