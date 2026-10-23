@@ -118,6 +118,51 @@ class mysqlTable extends connect
         }
     }
 
+    async _acquireDedicatedConnection() {
+        return new Promise((resolve, reject) => {
+            if (!this.connection.getConnection) {
+                return resolve(this.connection);
+            }
+            this.connection.getConnection((err, conn) => {
+                if (err) return reject(err);
+                resolve(conn);
+            });
+        });
+    }
+
+    async _releaseDedicatedConnection(conn) {
+        if (conn && typeof conn.release === 'function') {
+            conn.release();
+        }
+    }
+
+    _queryOnConnection(conn, query, config = {}) {
+        this.lastSql = query;
+        return new Promise((resolver, reject) => {
+            const options = (typeof config === 'object' && Object.keys(config).length > 0)
+                ? { sql: query, ...config }
+                : query;
+
+            conn.query(options, (error, result) => {
+                if (error) {
+                    if (error.errno == 1049) {
+                        this._createDatabase(() => {
+                            this._queryOnConnection(conn, query, config).then(resolver).catch(reject);
+                        });
+                    } else {
+                        reject(error);
+                    }
+                } else {
+                    if (Array.isArray(result)) {
+                        resolver(new dbResult(this, result));
+                    } else {
+                        resolver(result);
+                    }
+                }
+            });
+        });
+    }
+
     /**
     * connecta con la base de datos
     * @param {function} callback - funcion que se  ejecutara al connectar

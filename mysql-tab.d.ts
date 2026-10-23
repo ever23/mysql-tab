@@ -23,6 +23,7 @@ export class mysqlTable extends Connect {
         verify?: boolean
     ): dbTabla<T> & TMethods;
     query(query: string, params?: any[]): Promise<any>;
+    transaction<TResult = any>(callback: (tx: this) => Promise<TResult>): Promise<TResult>;
     beginTransaction(): Promise<any>;
     commit(): Promise<any>;
     rollback(): Promise<any>;
