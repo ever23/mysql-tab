@@ -138,7 +138,8 @@ class mysqlTable extends connect
 
     _queryOnConnection(conn, query, config = {}) {
         this.lastSql = query;
-        return new Promise((resolver, reject) => {
+        return this._executeWithTiming(query, () => {
+            return new Promise((resolver, reject) => {
             const options = (typeof config === 'object' && Object.keys(config).length > 0)
                 ? { sql: query, ...config }
                 : query;
@@ -160,6 +161,7 @@ class mysqlTable extends connect
                     }
                 }
             });
+        });
         });
     }
 
@@ -199,7 +201,8 @@ class mysqlTable extends connect
     */
     query(query, config = {}) {
         this.lastSql = query;
-        return new Promise((resolver, reject) => {
+        return this._executeWithTiming(query, () => {
+            return new Promise((resolver, reject) => {
             const options = (typeof config === 'object' && Object.keys(config).length > 0)
                 ? { sql: query, ...config }
                 : query;
@@ -224,6 +227,7 @@ class mysqlTable extends connect
                     }
                 }
             });
+        });
         });
     }
     /**
